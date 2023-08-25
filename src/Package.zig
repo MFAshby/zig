@@ -575,8 +575,12 @@ fn fetchAndUnpack(
             });
         }
 
-        const content_type = req.response.headers.getFirstValue("Content-Type") orelse
+        var content_type = req.response.headers.getFirstValue("Content-Type") orelse
             return report.fail(dep.url_tok, "Missing 'Content-Type' header", .{});
+        // Media type _may_ be followed by semicolon delimited parameters we don't care about
+        // https://www.rfc-editor.org/rfc/rfc9110#media.type
+        content_type = std.mem.splitScalar(u8, content_type, ';').first();
+        content_type = std.mem.trim(u8, content_type, " ");
 
         var prog_reader: ProgressReader(std.http.Client.Request.Reader) = .{
             .child_reader = req.reader(),
